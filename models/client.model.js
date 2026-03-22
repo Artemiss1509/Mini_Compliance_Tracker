@@ -1,26 +1,23 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../utils/DatabaseConnection.js';
+import { DataTypes } from "sequelize";
+import sequelize from "../utils/DatabaseConnection.js";
+import { CountryCodes } from "validator/lib/isISO31661Alpha2.js";
 
-const User = sequelize.define("CompUser", {
+const Client = sequelize.define("Client", {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
     },
-    name: {
+    companyName: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
     },
-    email: {
+    country: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
-        validate: {
-            isEmail: true,
-        },
     },
-    password: {
+    entityType: {
         type: DataTypes.STRING,
         allowNull: false,
     },
@@ -28,4 +25,6 @@ const User = sequelize.define("CompUser", {
     timestamps: true,
 });
 
-export default User;
+export default Client;
+
+    
