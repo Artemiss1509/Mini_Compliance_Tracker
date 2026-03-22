@@ -1,5 +1,3 @@
-import { stat } from "node:fs";
-
 document.addEventListener('DOMContentLoaded', () => {
     const signupForm = document.getElementById('signup-form');
     const loginForm = document.getElementById('login-form');
@@ -95,11 +93,11 @@ function clientFormSubmit(event) {
     };
 
     try {
-        // const response = axios.post('http://localhost:3000/api/clients', data, {
-        //     headers: {
-        //         Authorization: `Bearer ${localStorage.getItem('token')}`,
-        //     },
-        // });
+        const response = axios.post('http://localhost:3000/api/clients', data, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+        });
         const newClient = data.company;
         const clientList = document.getElementById('client-list');
         const newClientItem = document.createElement('button');
