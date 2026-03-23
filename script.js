@@ -206,8 +206,8 @@ function renderClients() {
             document.getElementById('selected-client-meta').textContent =
                 `${client.country || ''} • ${client.entityType || ''}`;
 
-            renderClients();     // re-render selection highlight
-            fetchTasks(client.id);      // update task view
+            renderClients();    
+            fetchTasks(client.id);     
         });
 
         clientList.appendChild(btn);
@@ -228,12 +228,10 @@ function renderTasks() {
         return;
     }
 
-    // Filter tasks for selected client
     let tasks = state.tasks.filter(
         task => task.clientId === state.selectedClient.id
     );
 
-    // Apply filters
     const statusFilter = document.getElementById('status-filter').value;
     const categoryFilter = document.getElementById('category-filter').value.toLowerCase();
 
@@ -262,7 +260,6 @@ function renderTasks() {
         const div = document.createElement('div');
         div.className = 'task-item';
 
-        // Overdue logic
         const isOverdue =
             task.status === 'pending' &&
             new Date(task.dueDate) < new Date();
