@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../utils/DatabaseConnection.js";
+import User from "./user.model.js";
 
 const Client = sequelize.define("Client", {
     id: {
@@ -19,6 +20,14 @@ const Client = sequelize.define("Client", {
     entityType: {
         type: DataTypes.STRING,
         allowNull: false,
+    },
+    userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: User,
+            key: "id",
+        },
     },
 }, {
     timestamps: true,

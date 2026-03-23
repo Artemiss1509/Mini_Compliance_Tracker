@@ -1,11 +1,21 @@
+const state = {
+    clients: [],
+    tasks: [],
+    selectedClient: null
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadClients();
     const signupForm = document.getElementById('signup-form');
     const loginForm = document.getElementById('login-form');
     const addClientBtn = document.getElementById('add-client-btn');
     const cancelModalBtn = document.getElementById('close-client-modal');
     const addClientForm = document.getElementById('add-client-form');
     const addTaskBtn = document.getElementById('add-task-form');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    if (document.getElementById('client-list')) {
+        fetchClients();
+    }
 
     if(signupForm){
         signupForm.addEventListener('submit', handleFormSubmit);
@@ -15,12 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if(addClientBtn){
         addClientBtn.addEventListener('click', () => {
-            document.getElementById('client-modal').style.display = 'block';
+            document.getElementById('client-modal').hidden = false;
         });
     }
     if(cancelModalBtn){
         cancelModalBtn.addEventListener('click', () => {
-            document.getElementById('client-modal').style.display = 'none';
+            document.getElementById('client-modal').hidden = true;
         });
     }
 
@@ -30,6 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if(addTaskBtn){
         addTaskBtn.addEventListener('submit', TaskFormSubmit);
+    }
+
+    if(logoutBtn){
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        });
     }
 
 });
@@ -99,13 +117,7 @@ async function clientFormSubmit(event) {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
         });
-        const newClient = data.company;
-        const clientList = document.getElementById('client-list');
-        const newClientItem = document.createElement('button');
-        newClientItem.textContent = newClient;
-        newClientItem.classList.add('client-item');
-        clientList.appendChild(newClientItem);
-        document.getElementById('client-modal').style.display = 'none';
+        await fetchClients();
     } catch (error) {
         
     }
@@ -115,52 +127,187 @@ async function clientFormSubmit(event) {
 async function TaskFormSubmit(event) {
     event.preventDefault();
 
+    if (!state.selectedClient) {
+        alert("Please select a client first");
+        return;
+    }
+
     const data = {
         title: event.target['task-title-input'].value.trim(),
         description: event.target['task-desc-input'].value.trim(),
         category: event.target['task-category-input'].value.trim(),
         dueDate: event.target['task-due-date-input'].value.trim(),
         status: event.target['task-status-input'].value.trim(),
-        priority: event.target['task-priority-input'].value.trim()
+        priority: event.target['task-priority-input'].value.trim(),
+        clientId: state.selectedClient.id
     };
 
     try {
-        const response = await axios.post('http://localhost:3000/api/tasks', data, {
+        await axios.post('http://localhost:3000/api/tasks', data, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
         });
-        const newTask = data.title;
-        const newbutton = document.createElement('button');
-        const taskList = document.getElementById('task-list');
-        const newTaskItem = document.createElement('li');
-        newTaskItem.textContent = newTask + ': ' + data.description;
-        newTaskItem.classList.add('task-item');
-        taskList.appendChild(newTaskItem);
-        document.getElementById('task-modal').style.display = 'none';
+
+        await fetchTasks(state.selectedClient.id);
+
     } catch (error) {
-        
+        console.error(error);
     }
 }
 
-async function loadClients() {
+async function fetchClients() {
     try {
         const response = await axios.get('http://localhost:3000/api/clients/all', {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
         });
-        console.log(response.data.clients);
-        const clients = [response.data.clients];
-        console.log(clients);
-        const clientList = document.getElementById('client-list');
-        clients.forEach(client => {
-            const clientItem = document.createElement('button');
-            clientItem.textContent = client.companyName;
-            clientItem.classList.add('client-item');
-            clientList.appendChild(clientItem);
-        });
+
+        const raw = response.data.clients;
+        console.log('Raw clients data:', raw);
+
+        state.clients = raw;
+
+        renderClients();
+
     } catch (error) {
-        console.error('Error loading clients:', error);
+        console.error('Error fetching clients:', error);
+    }
+}
+
+function renderClients() {
+    const clientList = document.getElementById('client-list');
+    const emptyState = document.getElementById('client-empty-state');
+
+    clientList.innerHTML = '';
+
+    if (!state.clients.length) {
+        emptyState.hidden = false;
+        return;
+    }
+
+    emptyState.hidden = true;
+
+    state.clients.forEach(client => {
+        const btn = document.createElement('button');
+
+        btn.textContent = client.companyName;
+        btn.className = 'client-item';
+
+        if (state.selectedClient?.id === client.id) {
+            btn.classList.add('selected');
+        }
+
+        btn.addEventListener('click', () => {
+            state.selectedClient = client;
+
+            document.getElementById('selected-client-name').textContent = client.companyName;
+            document.getElementById('selected-client-meta').textContent =
+                `${client.country || ''} • ${client.entityType || ''}`;
+
+            renderClients();     // re-render selection highlight
+            fetchTasks(client.id);      // update task view
+        });
+
+        clientList.appendChild(btn);
+    });
+}
+
+function renderTasks() {
+    const taskList = document.getElementById('task-list');
+    const emptyState = document.getElementById('task-empty-state');
+    const summary = document.getElementById('task-summary');
+
+    taskList.innerHTML = '';
+
+    if (!state.selectedClient) {
+        emptyState.textContent = 'Select a client to view tasks.';
+        emptyState.hidden = false;
+        summary.textContent = 'No client selected.';
+        return;
+    }
+
+    // Filter tasks for selected client
+    let tasks = state.tasks.filter(
+        task => task.clientId === state.selectedClient.id
+    );
+
+    // Apply filters
+    const statusFilter = document.getElementById('status-filter').value;
+    const categoryFilter = document.getElementById('category-filter').value.toLowerCase();
+
+    if (statusFilter !== 'all') {
+        tasks = tasks.filter(task => task.status === statusFilter);
+    }
+
+    if (categoryFilter) {
+        tasks = tasks.filter(task =>
+            task.category?.toLowerCase().includes(categoryFilter)
+        );
+    }
+
+    if (!tasks.length) {
+        emptyState.textContent = 'No tasks found for this client.';
+        emptyState.hidden = false;
+        summary.textContent = '0 tasks';
+        return;
+    }
+
+    emptyState.hidden = true;
+
+    summary.textContent = `${tasks.length} task(s)`;
+
+    tasks.forEach(task => {
+        const div = document.createElement('div');
+        div.className = 'task-item';
+
+        // Overdue logic
+        const isOverdue =
+            task.status === 'pending' &&
+            new Date(task.dueDate) < new Date();
+
+        if (task.status === 'completed') {
+            div.classList.add('completed');
+        }
+
+        if (isOverdue) {
+            div.classList.add('overdue');
+        }
+
+        div.innerHTML = `
+            <strong>${task.title}</strong>
+            <p>${task.description || ''}</p>
+            <small>
+                ${task.category || ''} • ${task.priority || ''} • Due: ${task.dueDate || ''}
+            </small>
+        `;
+
+        taskList.appendChild(div);
+    });
+}
+
+async function fetchTasks(clientId) {
+    try {
+        const status = document.getElementById('status-filter').value;
+        const category = document.getElementById('category-filter').value;
+
+        const response = await axios.get('http://localhost:3000/api/tasks', {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+            params: {
+                clientId,
+                status,
+                category
+            }
+        });
+
+        state.tasks = response.data.tasks;
+
+        renderTasks();
+
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
     }
 }

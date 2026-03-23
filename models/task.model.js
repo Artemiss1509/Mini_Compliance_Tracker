@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../utils/DatabaseConnection.js";
-import { title } from "node:process";
+import Client from "./client.model.js";
 
 const Task = sequelize.define("Task", {
     id: {
@@ -33,6 +33,14 @@ const Task = sequelize.define("Task", {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: 'medium',
+    },
+    clientId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: Client,
+            key: "id",
+        },
     },
 }, {
     timestamps: true,

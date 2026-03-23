@@ -5,12 +5,17 @@ import { User, Client, Task } from './models/associations.model.js';
 import userRoutes from './routes/user.routes.js';
 import clientRoutes from './routes/clients.router.js';
 import taskRoutes from './routes/tasks.router.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 
 const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 app.use(cors());
+app.use(express.static(__dirname));
 
 app.use('/api/users', userRoutes);
 app.use('/api/clients', clientRoutes);
@@ -18,7 +23,7 @@ app.use('/api', taskRoutes);
 
 
 
-sequelize.sync().then(() => {
+sequelize.sync({ alter: true }).then(() => {
     console.log('Database synchronized successfully.');
 }).catch((error) => {
     console.error('Error synchronizing the database:', error);

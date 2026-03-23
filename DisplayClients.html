@@ -3,105 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Client Task Manager</title>
+  <title>Compliance Tracker</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-  <div class="sidebar">
-    <h2>Clients</h2>
-    <button id="add-client-btn">+ Add Client</button>
-    <div id="client-list">
-      <!-- <div class="client selected">Client A</div>
-      <div class="client">Client B</div> -->
-      <button class="client">Client A</button>
-      <button class="client">Client B</button>
-      
-    </div>
-  </div>
-  <div class="modal-overlay" id="client-modal" style="display: none;">
-    <div class="modal">
-      <h3>Add New Client</h3>
-      <form id="add-client-form">
-        <label for="company-name">Company Name</label>
-        <input type="text" id="clientname-input" placeholder="Enter company name" />
-        <label for="country">Country</label>
-        <input type="text" id="client-country-input" placeholder="Enter country" />
-        <label for="entity">Entity Type</label>
-        <input type="text" id="client-entity-input" placeholder="Enter entity type" />
-        <button type="submit">Add Client</button>
-        
-      </form>
-      <div class="modal-actions">
-        <button id="close-client-modal">Cancel</button>
+  <div class="dashboard-shell">
+    <aside class="sidebar card">
+      <div class="sidebar-header">
+        <div>
+          <p class="eyebrow">LedgersCFO</p>
+          <h1>Clients</h1>
+        </div>
+        <button id="add-client-btn" class="secondary-btn" type="button">Add Client</button>
       </div>
-    </div>
-  </div>
+      <div id="current-user" class="user-pill"></div>
+      <div id="client-list" class="client-list"></div>
+      <p id="client-empty-state" class="empty-state" hidden>No clients yet. Add one to start tracking compliance work.</p>
+    </aside>
 
-  <div class="main">
+    <main class="main-panel">
+      <section class="hero card">
+        <div>
+          <p class="eyebrow">Compliance Tracker</p>
+          <h2 id="selected-client-name">Select a client</h2>
+          <p id="selected-client-meta" class="muted">Choose a client from the left to view and manage tasks.</p>
+        </div>
+        <button id="logout-btn" class="ghost-btn" type="button">Log Out</button>
+      </section>
 
-    <h2>Tasks</h2>
-
-    <div class="filters">
-      <label>Status:</label>
-      <select id="status-filter">
-        <option value="all">All</option>
-        <option value="pending">Pending</option>
-        <option value="completed">Completed</option>
-        <option value="overdue">Overdue</option>
-      </select>
-
-      <select id="priority">
-        <option value="all">All Priorities</option>
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-      </select>
-
-      <label>Category:</label>
-      <select id="category-filter">
-        <option value="all">All</option>
-        <option value="comp">Compliance</option>
-        <option value="legal">Legal</option>
-      </select>
-    </div>
-
-    <div class="add-task">
-        <form id="add-task-form">
-            <label for="title">Title</label>
-            <input type="text" placeholder="Title" />
-            <label for="description">Description</label>
-            <input type="text" placeholder="Description" />
-            <label for="priority">Priority</label>
-            <select>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-            </select>
-            <label for="category">Category</label>
-            <select>
-                <option value="comp">Compliance</option>
-                <option value="legal">Legal</option>
-            </select>
-            <label for="status">Status</label>
-            <select>
+      <section class="content-grid">
+        <section class="card">
+          <div class="section-header">
+            <div>
+              <h3>Filters</h3>
+              <p class="muted">Narrow tasks by status or category.</p>
+            </div>
+          </div>
+          <div class="filters">
+            <label>
+              Status
+              <select id="status-filter">
+                <option value="all">All</option>
                 <option value="pending">Pending</option>
                 <option value="completed">Completed</option>
-                <option value="overdue">Overdue</option>
-            </select>
-            <label for="due-date">Due Date</label>
-            <input type="date" />
-            <button type="submit">Add Task</button>
-        </form>
-    </div>
+              </select>
+            </label>
+            <label>
+              Category
+              <input type="text" id="category-filter" placeholder="e.g. GST, ROC, Payroll">
+            </label>
+          </div>
+        </section>
 
-    <!-- Task List -->
-    <div id="task-list">
+        <section class="card">
+          <div class="section-header">
+            <div>
+              <h3>Add Task</h3>
+              <p class="muted">Create a compliance item for the selected client.</p>
+            </div>
+          </div>
+          <form id="add-task-form" class="task-form">
+            <label>
+              Title
+              <input type="text" id="task-title-input" required placeholder="File GST return">
+            </label>
+            <label>
+              Description
+              <textarea id="task-desc-input" rows="3" placeholder="Quarterly filing for Maharashtra entity"></textarea>
+            </label>
+            <div class="form-row">
+              <label>
+                Category
+                <input type="text" id="task-category-input" required placeholder="Tax filing">
+              </label>
+              <label>
+                Priority
+                <select id="task-priority-input">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>
+                Due Date
+                <input type="date" id="task-due-date-input" required>
+              </label>
+              <label>
+                Status
+                <select id="task-status-input">
+                  <option value="pending" selected>Pending</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </label>
+            </div>
+            <button class="primary-btn" type="submit">Save Task</button>
+          </form>
+        </section>
+      </section>
 
-    </div>
-
+      <section class="card">
+        <div class="section-header">
+          <div>
+            <h3>Tasks</h3>
+            <p id="task-summary" class="muted">No client selected.</p>
+          </div>
+        </div>
+        <div id="task-list" class="task-list"></div>
+        <p id="task-empty-state" class="empty-state">Select a client to view tasks.</p>
+      </section>
+    </main>
   </div>
+
+  <div class="modal-overlay" id="client-modal" hidden>
+    <div class="modal card">
+      <div class="section-header">
+        <div>
+          <h3>Add New Client</h3>
+          <p class="muted">Basic details are enough for this demo.</p>
+        </div>
+        <button id="close-client-modal" class="ghost-btn" type="button">Close</button>
+      </div>
+      <form id="add-client-form" class="task-form">
+        <label>
+          Company Name
+          <input type="text" id="clientname-input" required placeholder="Acme Private Limited">
+        </label>
+        <div class="form-row">
+          <label>
+            Country
+            <input type="text" id="client-country-input" required placeholder="India">
+          </label>
+          <label>
+            Entity Type
+            <input type="text" id="client-entity-input" required placeholder="Private Limited">
+          </label>
+        </div>
+        <button class="primary-btn" type="submit">Add Client</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="message" class="toast" hidden></div>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="script.js"></script>
-
 </body>
 </html>
