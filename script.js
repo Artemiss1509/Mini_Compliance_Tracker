@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    loadClients();
     const signupForm = document.getElementById('signup-form');
     const loginForm = document.getElementById('login-form');
     const addClientBtn = document.getElementById('add-client-btn');
@@ -43,7 +44,7 @@ async function handleFormSubmit(event) {
     };
 
     try {
-        axios.post('http://localhost:3000/api/users/signup', data)
+        await axios.post('http://localhost:3000/api/users/signup', data)
             
         alert('Signup successful! Please log in.');
         window.location.href = '/login.html';
@@ -83,7 +84,7 @@ function displayError(message) {
     errorDiv.textContent = message;
 }
 
-function clientFormSubmit(event) {
+async function clientFormSubmit(event) {
     event.preventDefault();
 
     const data = {
@@ -93,7 +94,7 @@ function clientFormSubmit(event) {
     };
 
     try {
-        const response = axios.post('http://localhost:3000/api/clients', data, {
+        const response = await axios.post('http://localhost:3000/api/clients', data, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
@@ -111,7 +112,7 @@ function clientFormSubmit(event) {
 
 }
 
-function TaskFormSubmit(event) {
+async function TaskFormSubmit(event) {
     event.preventDefault();
 
     const data = {
@@ -124,7 +125,7 @@ function TaskFormSubmit(event) {
     };
 
     try {
-        const response = axios.post('http://localhost:3000/api/tasks', data, {
+        const response = await axios.post('http://localhost:3000/api/tasks', data, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
@@ -139,5 +140,27 @@ function TaskFormSubmit(event) {
         document.getElementById('task-modal').style.display = 'none';
     } catch (error) {
         
+    }
+}
+
+async function loadClients() {
+    try {
+        const response = await axios.get('http://localhost:3000/api/clients/all', {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+        });
+        console.log(response.data.clients);
+        const clients = [response.data.clients];
+        console.log(clients);
+        const clientList = document.getElementById('client-list');
+        clients.forEach(client => {
+            const clientItem = document.createElement('button');
+            clientItem.textContent = client.companyName;
+            clientItem.classList.add('client-item');
+            clientList.appendChild(clientItem);
+        });
+    } catch (error) {
+        console.error('Error loading clients:', error);
     }
 }

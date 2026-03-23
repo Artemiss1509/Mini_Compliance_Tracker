@@ -1,10 +1,22 @@
 import express from 'express';
+import cors from 'cors';
 import sequelize from './utils/DatabaseConnection.js';
-import User from './models/user.model.js';
+import { User, Client, Task } from './models/associations.model.js';
+import userRoutes from './routes/user.routes.js';
+import clientRoutes from './routes/clients.router.js';
+import taskRoutes from './routes/tasks.router.js';
+
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
+
+app.use('/api/users', userRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api', taskRoutes);
+
+
 
 sequelize.sync().then(() => {
     console.log('Database synchronized successfully.');

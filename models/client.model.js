@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../utils/DatabaseConnection.js";
-import { CountryCodes } from "validator/lib/isISO31661Alpha2.js";
 
 const Client = sequelize.define("Client", {
     id: {
