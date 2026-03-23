@@ -12,8 +12,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const addClientForm = document.getElementById('add-client-form');
     const addTaskBtn = document.getElementById('add-task-form');
     const logoutBtn = document.getElementById('logout-btn');
+    const statusFilter = document.getElementById('status-filter');
+    const categoryFilter = document.getElementById('category-filter');
+    const currentUser = document.getElementById('current-user');
+    const modal = document.getElementById('client-modal');
 
     if (document.getElementById('client-list')) {
+        if (currentUser) {
+            currentUser.textContent = localStorage.getItem('user') || 'User';
+        }
         fetchClients();
     }
 
@@ -23,16 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if(loginForm){
         loginForm.addEventListener('submit', loginFormSubmit);
     }
-    if(addClientBtn){
-        addClientBtn.addEventListener('click', () => {
-            document.getElementById('client-modal').hidden = false;
-        });
-    }
-    if(cancelModalBtn){
-        cancelModalBtn.addEventListener('click', () => {
-            document.getElementById('client-modal').hidden = true;
-        });
-    }
+    addClientBtn?.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+    });
+
+    cancelModalBtn?.addEventListener('click', () => {
+        modal.classList.add('hidden');
+    });
 
     if(addClientForm){
         addClientForm.addEventListener('submit', clientFormSubmit);
@@ -50,6 +54,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (statusFilter) {
+        statusFilter.addEventListener('change', () => {
+            if (state.selectedClient) {
+                fetchTasks(state.selectedClient.id);
+            }
+        });
+    }
+
+    if (categoryFilter) {
+        categoryFilter.addEventListener('input', () => {
+            renderTasks();
+        });
+    }
+
 });
 
 async function handleFormSubmit(event) {
@@ -63,12 +81,11 @@ async function handleFormSubmit(event) {
 
     try {
         await axios.post('http://localhost:3000/api/users/signup', data)
-            
-        alert('Signup successful! Please log in.');
+
+        showMessage('Signup successful! Please log in.', 'success');
         window.location.href = '/login.html';
-            
-         
     } catch (error) {
+        displayError(error.response?.data?.message || 'Signup failed');
         console.error('Error during signup:', error);
     }
 
@@ -88,8 +105,8 @@ async function loginFormSubmit(event) {
 
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', response.data.user.name);
-        
-        alert('Login successful! ');
+
+        showMessage('Login successful!', 'success');
         window.location.href = '/DisplayClients.html';
     } catch (error) {
         displayError(error.response?.data?.message || 'Login failed');
@@ -98,8 +115,21 @@ async function loginFormSubmit(event) {
 }
 
 function displayError(message) {
-    const errorDiv = document.getElementById('message');
-    errorDiv.textContent = message;
+    showMessage(message, 'error');
+}
+
+function showMessage(message, type = 'error') {
+    const messageEl = document.getElementById('message');
+
+    if (!messageEl) {
+        return;
+    }
+
+    messageEl.textContent = message;
+    messageEl.hidden = false;
+    messageEl.className = document.getElementById('client-list')
+        ? `toast ${type}`
+        : `inline-message ${type}`;
 }
 
 async function clientFormSubmit(event) {
@@ -118,8 +148,11 @@ async function clientFormSubmit(event) {
             },
         });
         await fetchClients();
+        event.target.reset();
+        document.getElementById('client-modal').hidden = true;
+        showMessage('Client added successfully.', 'success');
     } catch (error) {
-        
+        displayError(error.response?.data?.message || 'Could not add client');
     }
 
 }
@@ -149,9 +182,12 @@ async function TaskFormSubmit(event) {
             },
         });
 
+        event.target.reset();
         await fetchTasks(state.selectedClient.id);
+        showMessage('Task saved.', 'success');
 
     } catch (error) {
+        displayError(error.response?.data?.message || 'Could not save task');
         console.error(error);
     }
 }
@@ -173,6 +209,7 @@ async function fetchClients() {
 
     } catch (error) {
         console.error('Error fetching clients:', error);
+        displayError('Could not load clients');
     }
 }
 
@@ -280,6 +317,16 @@ function renderTasks() {
             </small>
         `;
 
+        const toggleButton = document.createElement('button');
+        toggleButton.type = 'button';
+        toggleButton.className = task.status === 'completed' ? 'task-toggle-btn pending-btn' : 'task-toggle-btn complete-btn';
+        toggleButton.textContent = task.status === 'completed' ? 'Mark as Pending' : 'Mark as Complete';
+        toggleButton.addEventListener('click', async () => {
+            await updateTaskStatus(task.id, task.status === 'completed' ? 'pending' : 'completed');
+        });
+
+        div.appendChild(toggleButton);
+
         taskList.appendChild(div);
     });
 }
@@ -306,5 +353,26 @@ async function fetchTasks(clientId) {
 
     } catch (error) {
         console.error('Error fetching tasks:', error);
+    }
+}
+
+async function updateTaskStatus(taskId, status) {
+    try {
+        await axios.patch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+            status,
+        }, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+        });
+
+        if (state.selectedClient) {
+            await fetchTasks(state.selectedClient.id);
+        }
+
+        showMessage(`Task marked as ${status}.`, 'success');
+    } catch (error) {
+        displayError(error.response?.data?.message || 'Could not update task status');
+        console.error('Error updating task status:', error);
     }
 }
