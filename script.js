@@ -4,6 +4,8 @@ const state = {
     selectedClient: null
 };
 
+const API_BASE = '/api';
+
 document.addEventListener('DOMContentLoaded', () => {
     const signupForm = document.getElementById('signup-form');
     const loginForm = document.getElementById('login-form');
@@ -80,7 +82,7 @@ async function handleFormSubmit(event) {
     };
 
     try {
-        await axios.post('http://localhost:3000/api/users/signup', data)
+        await axios.post(`${API_BASE}/users/signup`, data)
 
         showMessage('Signup successful! Please log in.', 'success');
         window.location.href = '/login.html';
@@ -98,7 +100,7 @@ async function loginFormSubmit(event) {
     const password = event.target.password.value.trim();
 
     try {
-        const response = await axios.post('http://localhost:3000/api/users/sign-in', {
+        const response = await axios.post(`${API_BASE}/users/sign-in`, {
             email,
             password
         });
@@ -142,7 +144,7 @@ async function clientFormSubmit(event) {
     };
 
     try {
-        const response = await axios.post('http://localhost:3000/api/clients', data, {
+        const response = await axios.post(`${API_BASE}/clients`, data, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
@@ -176,7 +178,7 @@ async function TaskFormSubmit(event) {
     };
 
     try {
-        await axios.post('http://localhost:3000/api/tasks', data, {
+        await axios.post(`${API_BASE}/tasks`, data, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
@@ -194,7 +196,7 @@ async function TaskFormSubmit(event) {
 
 async function fetchClients() {
     try {
-        const response = await axios.get('http://localhost:3000/api/clients/all', {
+        const response = await axios.get(`${API_BASE}/clients/all`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
@@ -336,7 +338,7 @@ async function fetchTasks(clientId) {
         const status = document.getElementById('status-filter').value;
         const category = document.getElementById('category-filter').value;
 
-        const response = await axios.get('http://localhost:3000/api/tasks', {
+        const response = await axios.get(`${API_BASE}/tasks`, {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
@@ -358,7 +360,7 @@ async function fetchTasks(clientId) {
 
 async function updateTaskStatus(taskId, status) {
     try {
-        await axios.patch(`http://localhost:3000/api/tasks/${taskId}/status`, {
+        await axios.patch(`${API_BASE}/tasks/${taskId}/status`, {
             status,
         }, {
             headers: {
